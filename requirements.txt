@@ -1,0 +1,10 @@
+streamlit
+langchain
+langchain-core
+langchain-community
+python-docx
+pymupdf
+pandas
+openpyxl
+sqlalchemy
+langchain-ollama
