@@ -179,7 +179,8 @@ provider = st.sidebar.radio("选择模型来源", [
     "硅基流动 (线上)",
     "商汤 MINIMAX (线上)",
     "阿里云通义 (线上)",
-    "百度智能云 (线上)"
+    "百度智能云 (线上)",
+    "Agnes AI (线上)"
 ] + custom_provider_names)
 
 if provider == "Ollama (本地)":
@@ -333,6 +334,12 @@ elif provider == "阿里云通义 (线上)":
     else:
         st.sidebar.error("❌ 未检测到 DASHSCOPE_API_KEY 环境变量")
         st.sidebar.info("请在系统环境变量中设置 DASHSCOPE_API_KEY")
+
+elif provider == "Agnes AI (线上)":
+    model_name = st.sidebar.selectbox("选择模型", ["Agnes-2.0-Flash", "Agnes-1.5-Flash", "agnes-image-20-flash", "agnes-video-v20"])
+    api_key = os.environ.get("AGNES_API_KEY", "sk-wNaxpTaBkIrOnoXX7azJrkm8d8oVLYDWVTK7VHkqoA4OGhjq")
+    base_url = "https://apihub.agnes-ai.com/v1"
+    st.sidebar.success("✅ Agnes AI 已就绪")
 
 elif provider in custom_provider_names:
     cfg = next(m for m in custom_models_cfg if m['provider_name'] == provider)
@@ -678,6 +685,8 @@ else:
                 elif provider == "百度智能云 (线上)":
                     provider_name = "Baidu"
                     secret_key = os.environ.get("QIANFAN_SECRET_KEY", "")
+                elif provider == "Agnes AI (线上)":
+                    provider_name = "Agnes"
                 
                 # Get header descriptions from session state
                 header_descriptions = st.session_state.get("header_descriptions", {})

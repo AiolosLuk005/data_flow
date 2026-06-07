@@ -59,7 +59,7 @@ def extract_by_headers(text: str, headers: list[str],
         except Exception:
             pass
 
-    if provider in ["DeepSeek", "Moonshot", "Volcengine", "SiliconFlow", "MINIMAX"] or (base_url and api_key):
+    if provider in ["DeepSeek", "Moonshot", "Volcengine", "SiliconFlow", "MINIMAX", "Agnes"] or (base_url and api_key):
         # OpenAI-compatible API providers (including custom ones)
         try:
             from langchain_openai import ChatOpenAI
@@ -75,7 +75,8 @@ def extract_by_headers(text: str, headers: list[str],
             "Moonshot": "https://api.moonshot.cn/v1",
             "Volcengine": "https://ark.cn-beijing.volces.com/api/v3",
             "SiliconFlow": "https://api.siliconflow.cn/v1",
-            "MINIMAX": "https://api.minimax.chat/v1"
+            "MINIMAX": "https://api.minimax.chat/v1",
+            "Agnes": "https://apihub.agnes-ai.com/v1"
         }
         url = base_url or default_urls.get(provider)
         
