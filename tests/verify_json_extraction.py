@@ -1,5 +1,11 @@
 import re
 import json
+import sys
+
+# Configure stdout to use UTF-8 to prevent UnicodeEncodeError when printing emojis in Windows cmd/PowerShell
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 
 def extract_json_from_text(text):
     """

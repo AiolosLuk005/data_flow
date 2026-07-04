@@ -32,8 +32,6 @@ from src.database import (
     save_custom_model, get_all_custom_models, delete_custom_model
 )
 from src.formula_engine import process_computed_columns
-import tkinter as tk
-from tkinter import filedialog
 
 # Initialize DB on start
 init_db()
@@ -734,6 +732,33 @@ else:
             status_text.text("正在计算计算列...")
             all_rows = process_computed_columns(headers, header_descriptions, all_rows)
 
+        # Clean project names: strip redundant prefixes/suffixes like "关于", "可行性研究报告评审意见"
+        for row in all_rows:
+            if "项目名称" in row and row["项目名称"]:
+                name = str(row["项目名称"]).strip()
+                if name.startswith("关于"):
+                    name = name[2:]
+                suffixes = [
+                    "可行性研究报告评审意见的通知",
+                    "可行性研究报告评审意见",
+                    "可行性研究报告的评审意见",
+                    "可行性研究的评审意见",
+                    "评审意见的通知",
+                    "可行性研究报告",
+                    "可研报告",
+                    "可行性研究",
+                    "评审意见",
+                    "意见",
+                    "报告"
+                ]
+                for suffix in suffixes:
+                    if name.endswith(suffix):
+                        name = name[:-len(suffix)]
+                name = name.strip()
+                if name.endswith("的"):
+                    name = name[:-1]
+                row["项目名称"] = name.strip()
+
         # Save to session state
         st.session_state.results = all_rows
         st.session_state.result_headers = full_headers
@@ -770,43 +795,23 @@ if "results" in st.session_state and st.session_state.results:
         )
         st.success("✅ 数据已成功归档到本地数据库")
 
-    # Export as Excel
-    if col2.button("📥 导出 Excel"):
-        # 1. Get last export path from DB
-        last_dir = get_setting("last_export_dir", os.path.expanduser("~"))
-        
-        # 2. Open tkinter dialog
-        # Create hidden root window
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes('-topmost', True) # Bring dialog to front
-        
-        file_path = filedialog.asksaveasfilename(
-            initialdir=last_dir,
-            initialfile="data_flow_export.xlsx",
-            defaultextension=".xlsx",
-            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
-            parent=root,
-            title="选择保存位置"
+    # Export as Excel (Using Streamlit native download_button to avoid Tkinter threading crashes)
+    excel_data = None
+    try:
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            edited_df.to_excel(writer, index=False, sheet_name='提取结果')
+        excel_data = buffer.getvalue()
+    except Exception as e:
+        st.error(f"❌ 准备 Excel 导出文件失败: {str(e)}")
+
+    if excel_data:
+        col2.download_button(
+            label="📥 导出 Excel",
+            data=excel_data,
+            file_name="data_flow_export.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-        
-        root.destroy()
-        
-        if file_path:
-            try:
-                # 3. Save file directly
-                with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
-                    edited_df.to_excel(writer, index=False, sheet_name='提取结果')
-                
-                # 4. Save path to DB
-                new_dir = os.path.dirname(file_path)
-                update_setting("last_export_dir", new_dir)
-                
-                st.success(f"✅ 文件已成功导出至: {file_path}")
-            except Exception as e:
-                st.error(f"❌ 导出失败: {str(e)}")
-        else:
-            st.info("已取消导出")
 
     # Clear results
     if col3.button("🗑️ 清空结果"):

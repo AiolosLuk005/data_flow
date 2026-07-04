@@ -234,18 +234,27 @@ def search_relevant_chunks(chunks: list[str], headers: list[str],
             score += chunk.count(kw)
         scored_chunks.append((score, i, chunk))
     
-    # Sort by score descending, take top_k
-    scored_chunks.sort(key=lambda x: x[0], reverse=True)
-    top_chunks = scored_chunks[:top_k]
+    if not chunks:
+        return []
+    
+    first_chunk = chunks[0]
+    
+    # Sort the other chunks by score descending, taking top_k - 1 relevant ones
+    other_scored_chunks = scored_chunks[1:]
+    other_scored_chunks.sort(key=lambda x: x[0], reverse=True)
+    top_others = other_scored_chunks[:(top_k - 1)]
     
     # Re-sort by original order to preserve document flow
-    top_chunks.sort(key=lambda x: x[1])
+    top_others.sort(key=lambda x: x[1])
     
-    result = [chunk for _, _, chunk in top_chunks if _ > 0]
-    if result:
-        return result
-    # Fallback: return the first chunk if no keywords matched
-    return [chunks[0]] if chunks else []
+    # Construct final list: start with the first chunk, then add other relevant chunks with score > 0
+    result = [first_chunk]
+    for _, _, chunk in top_others:
+        if _ > 0:
+            result.append(chunk)
+            
+    return result
+
 
 
 if __name__ == "__main__":

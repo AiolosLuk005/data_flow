@@ -50,8 +50,29 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
+    
+    # Auto-migration: Check and add missing columns for backward compatibility
+    # Check ExtractionResults table
+    cursor.execute("PRAGMA table_info(ExtractionResults)")
+    existing_columns = [row[1] for row in cursor.fetchall()]
+    if "header_descriptions" not in existing_columns:
+        try:
+            cursor.execute("ALTER TABLE ExtractionResults ADD COLUMN header_descriptions TEXT")
+        except sqlite3.OperationalError as e:
+            print(f"Migration error on ExtractionResults: {e}")
+            
+    # Check TableTemplates table
+    cursor.execute("PRAGMA table_info(TableTemplates)")
+    existing_columns = [row[1] for row in cursor.fetchall()]
+    if "header_descriptions" not in existing_columns:
+        try:
+            cursor.execute("ALTER TABLE TableTemplates ADD COLUMN header_descriptions TEXT")
+        except sqlite3.OperationalError as e:
+            print(f"Migration error on TableTemplates: {e}")
+            
     conn.commit()
     conn.close()
+
 
 
 def save_extraction(headers: list[str], rows: list[dict], source_files: list[str], header_descriptions: dict = None):
